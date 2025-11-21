@@ -574,29 +574,44 @@ class TodoGridPage extends StatelessWidget {
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'blocs/todo_cubit.dart';
-import 'pages/todo_home_page.dart';
+// Import Cubit dan Halaman utama aplikasi kasir
+import 'blocs/cart_cubit.dart'; 
+import 'pages/cart_home_page.dart'; 
 
-void main() => runApp(const AdvancedTodoApp());
+void main() {
+  // Mengubah nama fungsi main agar memanggil root widget yang benar
+  runApp(const CashierApp());
+}
 
-class AdvancedTodoApp extends StatelessWidget {
-  const AdvancedTodoApp({super.key});
+// Mengganti MyApp dengan CashierApp untuk mencerminkan fungsi baru
+class CashierApp extends StatelessWidget {
+  const CashierApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // 1. Menyediakan CartCubit di level teratas aplikasi menggunakan BlocProvider
     return BlocProvider(
-      create: (_) => TodoCubit(),
+      create: (context) => CartCubit(),
+      
       child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Advanced Flutter BLoC To-Do',
+        title: 'Aplikasi Kasir Es Krim',
         theme: ThemeData(
+          // Menggunakan skema warna yang lebih ceria/sesuai es krim
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.pinkAccent), 
           useMaterial3: true,
-          colorSchemeSeed: Colors.blueAccent,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.pinkAccent,
+            foregroundColor: Colors.white,
+          ),
         ),
-        home: const TodoHomePage(),
+        // 2. Mengatur halaman utama (home) ke CartHomePage
+        home: const CartHomePage(),
+        debugShowCheckedModeBanner: false,
       ),
     );
   }
 }
+
+// Hapus class MyHomePage dan _MyHomePageState karena sudah tidak digunakan.
 ```
    
