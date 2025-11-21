@@ -30,6 +30,51 @@ Fungsi: Menandakan bahwa data keranjang belanja telah berhasil dimuat atau diper
 Deskripsi: Ini adalah state utama di mana UI menampilkan isi keranjang, total harga, dan tombol checkout.
 Variabel Data: Harus menyimpan data keranjang yang relevan, seperti List<CartItem> items, double totalPrice, dan int totalItemCount.
 
+## **2. Model Data Lengkap**
+
+**File:** `models/product_model.dart`
+
+```dart
+class ProductModel {
+  final String id;
+  final String name;
+  final int price;
+  final String image; // Bisa digunakan untuk menampilkan gambar es krim
+
+  ProductModel({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.image,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'price': price,
+      'image': image,
+    };
+  }
+
+  factory ProductModel.fromMap(Map<String, dynamic> map) {
+    return ProductModel(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      price: map['price'] as int,
+      image: map['image'] as String,
+    );
+  }
+}
+```
+
+---
+
+## **3. Logika Bisnis (Cubit)**
+
+**File:** `blocs/cart_cubit.dart`
+
+```dart
 // Lokasi: lib/blocs/cart_cubit.dart
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -121,39 +166,107 @@ class CartCubit extends Cubit<CartState> {
     emit(CartState(items: [])); 
   }
 }
+```
 
-class ProductModel {
-  final String id;
-  final String name;
-  final int price;
-  final String image; // Bisa digunakan untuk menampilkan gambar es krim
+---
 
-  ProductModel({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.image,
-  });
+## **4. Membuat Custom Widget (TodoCard)**
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'price': price,
-      'image': image,
-    };
-  }
+**File:** `widgets/product_card.dart`
 
-  factory ProductModel.fromMap(Map<String, dynamic> map) {
-    return ProductModel(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      price: map['price'] as int,
-      image: map['image'] as String,
+```dart
+// Lokasi: lib/widgets/product_card.dart
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../models/product_model.dart';
+import '../blocs/cart_cubit.dart';
+
+class ProductCard extends StatelessWidget {
+  final ProductModel product;
+
+  const ProductCard({
+    Key? key,
+    required this.product,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cartCubit = context.read<CartCubit>();
+    
+    // Kita ubah Card menjadi GestureDetector atau InkWell agar lebih cocok sebagai Tombol Menu Kasir
+    return InkWell(
+      onTap: () {
+        // Panggil addToCart saat menu diklik
+        cartCubit.addToCart(product);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${product.name} ditambahkan ke nota!'),
+            duration: const Duration(milliseconds: 500),
+          ),
+        );
+      },
+      child: Card(
+        elevation: 4,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            // Gambar Produk/Es Krim
+            Expanded(
+              child: Image.network(
+                product.image,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(child: Icon(Icons.icecream, size: 50, color: Colors.pink));
+                },
+              ),
+            ),
+            
+            // Nama dan Harga
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Rp ${product.price.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.green[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
+```
 
+**Widget ini menggunakan Stack** untuk menampilkan label prioritas di atas card.
+
+---
+
+## **5. Halaman Utama (Home Page)**
+
+**File:** `pages/todo_home_page.dart`
+
+```dart
 // Lokasi: lib/pages/cart_home_page.dart (Tampilan Utama Kasir)
 
 import 'package:flutter/material.dart';
@@ -213,7 +326,15 @@ class CartHomePage extends StatelessWidget {
     );
   }
 }
+```
 
+---
+
+## **6. Halaman Detail**
+
+**File:** `pages/card_summary_page.dart`
+
+```dart
 // Lokasi: lib/pages/cart_summary_page.dart (Panel Nota Kasir)
 
 import 'package:flutter/material.dart';
@@ -386,85 +507,96 @@ class CartSummaryPage extends StatelessWidget {
     }
   }
 }
+```
 
-// Lokasi: lib/widgets/product_card.dart
+---
 
+## **7. Halaman GridView**
+
+**File:** `pages/todo_grid_page.dart`
+
+```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../models/product_model.dart';
-import '../blocs/cart_cubit.dart';
+import '../blocs/todo_cubit.dart';
+import '../models/todo_model.dart';
+import '../widgets/todo_card.dart';
+import 'todo_detail_page.dart';
 
-class ProductCard extends StatelessWidget {
-  final ProductModel product;
-
-  const ProductCard({
-    Key? key,
-    required this.product,
-  }) : super(key: key);
+class TodoGridPage extends StatelessWidget {
+  const TodoGridPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final cartCubit = context.read<CartCubit>();
-    
-    // Kita ubah Card menjadi GestureDetector atau InkWell agar lebih cocok sebagai Tombol Menu Kasir
-    return InkWell(
-      onTap: () {
-        // Panggil addToCart saat menu diklik
-        cartCubit.addToCart(product);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${product.name} ditambahkan ke nota!'),
-            duration: const Duration(milliseconds: 500),
-          ),
-        );
-      },
-      child: Card(
-        elevation: 4,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            // Gambar Produk/Es Krim
-            Expanded(
-              child: Image.network(
-                product.image,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Icon(Icons.icecream, size: 50, color: Colors.pink));
-                },
-              ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Grid View')),
+      body: BlocBuilder<TodoCubit, List<Todo>>(
+        builder: (context, todos) {
+          if (todos.isEmpty) {
+            return const Center(child: Text('Tidak ada tugas'));
+          }
+          return GridView.builder(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2, childAspectRatio: 1.1,
             ),
-            
-            // Nama dan Harga
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            itemCount: todos.length,
+            itemBuilder: (context, index) {
+              final todo = todos[index];
+              return TodoCard(
+                todo: todo,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TodoDetailPage(todo: todo),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Rp ${product.price.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.green[700],
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+                ),
+                onDelete: () =>
+                    context.read<TodoCubit>().removeTodo(todo.id),
+                onToggle: () =>
+                    context.read<TodoCubit>().toggleTodo(todo.id),
+              );
+            },
+          );
+        },
       ),
     );
   }
 }
+```
+
+---
+
+## **8. Main Entry**
+
+**File:** `main.dart`
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'blocs/todo_cubit.dart';
+import 'pages/todo_home_page.dart';
+
+void main() => runApp(const AdvancedTodoApp());
+
+class AdvancedTodoApp extends StatelessWidget {
+  const AdvancedTodoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => TodoCubit(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Advanced Flutter BLoC To-Do',
+        theme: ThemeData(
+          useMaterial3: true,
+          colorSchemeSeed: Colors.blueAccent,
+        ),
+        home: const TodoHomePage(),
+      ),
+    );
+  }
+}
+```
+   
