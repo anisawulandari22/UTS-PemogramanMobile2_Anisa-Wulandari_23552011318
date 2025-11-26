@@ -2,6 +2,9 @@
 # 23552011318
 # TIF RP-23 CNS A
 
+## **Link Youtube**
+https://youtu.be/4vJmqYYrNis?si=Jh5V36-pICdCgSUu
+
 ## **Bagian A - Teori**
 1. Jelaskan perbedaan antara Cubit dan Bloc dalam arsitektur Flutter.
 2. Mengapa penting untuk memisahkan antara model data, logika bisnis, dan UI dalam pengembangan aplikasi Flutter?
